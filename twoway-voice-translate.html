@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Two‑Way Voice Translator (HTML Demo)</title>
+  <style>
+    :root{
+      --bg:#0f172a;       /* slate-900 */
+      --panel:#111827;    /* gray-900 */
+      --muted:#1f2937;    /* gray-800 */
+      --text:#e5e7eb;     /* gray-200 */
+      --sub:#94a3b8;      /* slate-400 */
+      --accent:#22d3ee;   /* cyan-400 */
+      --accent2:#a78bfa;  /* violet-400 */
+      --danger:#ef4444;   /* red-500 */
+      --ok:#10b981;       /* emerald-500 */
+    }
+    *{ box-sizing: border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: linear-gradient(120deg, #0b1025, #101532 55%, #0b1025);
+      color: var(--text);
+      min-height: 100vh;
+      display:flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .app{
+      width: 100%;
+      max-width: 1100px;
+      background: rgba(17,24,39,0.75);
+      backdrop-filter: blur(8px);
+      border: 1px solid #1f2937;
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+    header{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      padding: 8px 6px 18px;
+      border-bottom: 1px solid #1f2937;
+      margin-bottom: 14px;
+    }
+    .title{
+      font-weight: 800;
+      letter-spacing: 0.2px;
+      font-size: 22px;
+      display:flex; align-items:center; gap:10px;
+    }
+    .badge{
+      font-size: 12px; padding: 4px 8px; border-radius: 999px; background: #0b3b46; color:#b0f4ff; border:1px solid #155e6b;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 900px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(31,41,55,0.45), rgba(17,24,39,0.55));
+      border: 1px solid #1f2937;
+      border-radius: 16px;
+      padding: 14px;
+    }
+    .card h3{ margin: 0 0 10px; font-size: 16px; letter-spacing: .2px; color:#e2e8f0; }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    select, input[type="text"], input[type="password"]{
+      background:#0b1222; color: var(--text); border:1px solid #263045; border-radius: 10px; padding:10px 12px; outline: none; min-width: 160px;
+    }
+    .btn{
+      appearance: none; border: 1px solid #2b3550; background: #0d1530; color: #dbeafe; padding: 10px 14px; border-radius: 12px;
+      cursor: pointer; font-weight: 700; letter-spacing:.25px;
+      transition: transform .05s ease, background .2s ease, border-color .2s ease;
+    }
+    .btn:hover{ background: #0e1740; border-color:#384469; }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{ background: linear-gradient(90deg, #0e2a3a, #1a1442); border-color:#2b3550; }
+    .btn.danger{ background: #3a0e10; border-color:#5b1c20; color:#fecaca; }
+    .pill{
+      font-size: 12px; padding: 4px 8px; border-radius: 999px; border:1px solid #334155; color:#cbd5e1; background:#0b1222;
+    }
+    .status{
+      display:flex; align-items:center; gap:8px; font-size: 12px; color:#cbd5e1; padding: 6px 10px; border:1px dashed #263045; border-radius: 10px;
+      background: rgba(2,6,23,0.5);
+    }
+    .status-dot{ width:8px; height:8px; border-radius:50%; background: #64748b; }
+    .status-dot.live{ background: var(--ok); box-shadow: 0 0 0 3px rgba(16,185,129,.12); }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    textarea{
+      width:100%; min-height: 92px; resize: vertical; border:1px solid #263045; border-radius:12px; background:#0b1222; color: var(--text); padding:10px 12px;
+    }
+    .hint{ font-size: 12px; color:#93a2b8; }
+    .log{
+      height: 140px; overflow:auto; border:1px solid #263045; border-radius:12px; background:#060a18; padding: 8px 10px; font-size: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="title">Two‑Way Voice Translator <span class="badge">HTML Demo</span></div>
+      <div class="status"><span id="statusDot" class="status-dot"></span><span id="statusText">Idle</span></div>
+    </header>
+
+    <div class="card" style="margin-bottom: 12px;">
+      <h3>API (Optional)</h3>
+      <div class="row">
+        <input id="apiKey" type="password" placeholder="OpenAI API Key (optional)" style="min-width:280px" />
+        <input id="modelName" type="text" placeholder="Model (e.g., gpt-4o-mini)" value="gpt-4o-mini" />
+        <span class="hint">If omitted, demo will do a simple on-device 'translation' (no network).</span>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Speaker A → Speaker B</h3>
+        <div class="row" style="margin-bottom:10px">
+          <label class="pill">A speaks:</label>
+          <select id="langA"></select>
+          <label class="pill">Translate to:</label>
+          <select id="langB"></select>
+          <button id="btnToggleA" class="btn primary">🎙️ Start A</button>
+        </div>
+        <textarea id="transcriptA" placeholder="Transcript of A will appear here..." readonly></textarea>
+        <div class="hint">When A stops talking, the app will translate and speak to B.</div>
+      </div>
+
+      <div class="card">
+        <h3>Speaker B → Speaker A</h3>
+        <div class="row" style="margin-bottom:10px">
+          <label class="pill">B speaks:</label>
+          <select id="langBIn"></select>
+          <label class="pill">Translate to:</label>
+          <select id="langAOut"></select>
+          <button id="btnToggleB" class="btn primary">🎙️ Start B</button>
+        </div>
+        <textarea id="transcriptB" placeholder="Transcript of B will appear here..." readonly></textarea>
+        <div class="hint">When B stops talking, the app will translate and speak to A.</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <h3>Logs</h3>
+      <div id="log" class="log" aria-live="polite"></div>
+      <div class="row" style="margin-top:10px">
+        <button id="btnStopAll" class="btn danger">■ Stop All</button>
+        <button id="btnClearLog" class="btn">Clear Log</button>
+        <span class="hint">Grant microphone permission when prompted. Chrome recommended.</span>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const statusDot = document.getElementById('statusDot');
+  const statusText = document.getElementById('statusText');
+  const logEl = document.getElementById('log');
+
+  function setStatus(text, live=false){
+    statusText.textContent = text;
+    statusDot.classList.toggle('live', !!live);
+  }
+  function log(msg){
+    const ts = new Date().toLocaleTimeString();
+    logEl.textContent += `[${ts}] ${msg}\n`;
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  // ---- Languages ----
+  const LANGS = [
+    { code: 'en-US', label: 'English (US)' },
+    { code: 'en-GB', label: 'English (UK)' },
+    { code: 'el-GR', label: 'Greek (Greece)' },
+    { code: 'es-ES', label: 'Spanish (Spain)' },
+    { code: 'fr-FR', label: 'French' },
+    { code: 'de-DE', label: 'German' },
+    { code: 'it-IT', label: 'Italian' },
+    { code: 'pt-PT', label: 'Portuguese (Portugal)' },
+    { code: 'ru-RU', label: 'Russian' },
+    { code: 'tr-TR', label: 'Turkish' },
+    { code: 'ar-SA', label: 'Arabic' },
+    { code: 'hi-IN', label: 'Hindi' },
+    { code: 'zh-CN', label: 'Chinese (Mandarin)' },
+    { code: 'ja-JP', label: 'Japanese' },
+    { code: 'ko-KR', label: 'Korean' }
+  ];
+  function populateSelect(selectEl, defaultCode){
+    selectEl.innerHTML = '';
+    for (const l of LANGS){
+      const opt = document.createElement('option');
+      opt.value = l.code;
+      opt.textContent = `${l.label} — ${l.code}`;
+      if (defaultCode && l.code === defaultCode) opt.selected = true;
+      selectEl.appendChild(opt);
+    }
+  }
+
+  const langA = document.getElementById('langA');
+  const langB = document.getElementById('langB');
+  const langBIn = document.getElementById('langBIn');
+  const langAOut = document.getElementById('langAOut');
+  populateSelect(langA, 'en-GB');
+  populateSelect(langB, 'el-GR');
+  populateSelect(langBIn, 'el-GR');
+  populateSelect(langAOut, 'en-GB');
+
+  // ---- Web Speech API checks ----
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const speechSynthesisSupported = 'speechSynthesis' in window;
+  if (!SpeechRecognition){
+    setStatus('Browser does not support SpeechRecognition');
+    log('ERROR: SpeechRecognition not supported. Use Chrome/Edge on desktop.');
+  }
+  if (!speechSynthesisSupported){
+    log('WARNING: speechSynthesis not supported in this browser.');
+  }
+
+  // ---- Translator backend ----
+  const apiKeyInput = document.getElementById('apiKey');
+  const modelInput = document.getElementById('modelName');
+
+  async function translateText(text, sourceLangCode, targetLangCode){
+    const apiKey = apiKeyInput.value.trim();
+    const source = sourceLangCode.split('-')[0];
+    const target = targetLangCode.split('-')[0];
+
+    // If no API key, do a naive "local translation" (identity) so the demo flows.
+    if (!apiKey){
+      log('No API key provided — using local passthrough (no real translation).');
+      return text;
+    }
+
+    const model = modelInput.value.trim() || 'gpt-4o-mini';
+    const sys = `You are a professional translator. Translate the user's text from ${source} to ${target}. Only return the translated text, no explanations.`;
+    try{
+      const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model,
+          temperature: 0.2,
+          messages: [
+            { role: "system", content: sys },
+            { role: "user", content: text }
+          ]
+        })
+      });
+      if (!resp.ok){
+        const t = await resp.text();
+        throw new Error(`OpenAI API error: ${resp.status} ${t}`);
+      }
+      const data = await resp.json();
+      const content = data.choices?.[0]?.message?.content?.trim();
+      if (!content) throw new Error('Empty translation response');
+      return content;
+    }catch(err){
+      log('Translation error: ' + err.message);
+      return text; // fallback
+    }
+  }
+
+  // ---- Speech synthesis (TTS) ----
+  function speak(text, langCode){
+    if (!speechSynthesisSupported) return;
+    const utter = new SpeechSynthesisUtterance(text);
+    // Try to find a matching voice
+    const voices = window.speechSynthesis.getVoices();
+    const match = voices.find(v => v.lang === langCode) || voices.find(v => v.lang.startsWith(langCode.split('-')[0]));
+    if (match) utter.voice = match;
+    utter.lang = match ? match.lang : langCode;
+    utter.rate = 1.0;
+    utter.pitch = 1.0;
+    window.speechSynthesis.cancel(); // stop any current speech
+    window.speechSynthesis.speak(utter);
+  }
+
+  // Lazy load voices (Chrome quirk)
+  if (speechSynthesisSupported){
+    window.speechSynthesis.onvoiceschanged = () => {};
+  }
+
+  // ---- Recognition session helper ----
+  function createRecognizer(langCode, onResult, onEnd){
+    if (!SpeechRecognition) return null;
+    const r = new SpeechRecognition();
+    r.lang = langCode;
+    r.interimResults = true;
+    r.continuous = false; // one turn; we restart on each press
+    let finalTranscript = '';
+
+    r.onstart = () => { setStatus(`Listening (${langCode})`, true); log(`Listening: ${langCode}`); };
+    r.onresult = (e) => {
+      let interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++){
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) finalTranscript += t;
+        else interim += t;
+      }
+      onResult(finalTranscript, interim);
+    };
+    r.onerror = (e) => { log('Recognition error: ' + e.error); };
+    r.onend = () => { setStatus('Idle', false); log('Recognition ended.'); onEnd(finalTranscript); finalTranscript=''; };
+    return r;
+  }
+
+  // ---- Wire up UI for A -> B ----
+  const btnA = document.getElementById('btnToggleA');
+  const transcriptA = document.getElementById('transcriptA');
+  let recA = null;
+  btnA.addEventListener('click', () => {
+    if (!SpeechRecognition) return;
+    if (recA){ recA.stop(); recA = null; btnA.textContent = '🎙️ Start A'; return; }
+    transcriptA.value = '';
+    recA = createRecognizer(langA.value, (final, interim) => {
+      transcriptA.value = (final || '') + (interim ? '\n' + '('+interim+')' : '');
+    }, async (final) => {
+      if (final && final.trim()){
+        const translated = await translateText(final.trim(), langA.value, langB.value);
+        speak(translated, langB.value);
+        log(`A→B: "${final.trim()}" → "${translated}"`);
+      }
+      recA = null; btnA.textContent = '🎙️ Start A';
+    });
+    btnA.textContent = '⏹ Stop A';
+    try{ recA.start(); }catch(err){ log('Start error A: ' + err.message); }
+  });
+
+  // ---- Wire up UI for B -> A ----
+  const btnB = document.getElementById('btnToggleB');
+  const transcriptB = document.getElementById('transcriptB');
+  let recB = null;
+  btnB.addEventListener('click', () => {
+    if (!SpeechRecognition) return;
+    if (recB){ recB.stop(); recB = null; btnB.textContent = '🎙️ Start B'; return; }
+    transcriptB.value = '';
+    recB = createRecognizer(langBIn.value, (final, interim) => {
+      transcriptB.value = (final || '') + (interim ? '\n' + '('+interim+')' : '');
+    }, async (final) => {
+      if (final && final.trim()){
+        const translated = await translateText(final.trim(), langBIn.value, langAOut.value);
+        speak(translated, langAOut.value);
+        log(`B→A: "${final.trim()}" → "${translated}"`);
+      }
+      recB = null; btnB.textContent = '🎙️ Start B';
+    });
+    btnB.textContent = '⏹ Stop B';
+    try{ recB.start(); }catch(err){ log('Start error B: ' + err.message); }
+  });
+
+  // ---- Controls ----
+  document.getElementById('btnStopAll').addEventListener('click', () => {
+    if (recA) try{ recA.stop(); }catch{}; recA = null; btnA.textContent = '🎙️ Start A';
+    if (recB) try{ recB.stop(); }catch{}; recB = null; btnB.textContent = '🎙️ Start B';
+    if (speechSynthesisSupported) window.speechSynthesis.cancel();
+    setStatus('Idle', false);
+  });
+  document.getElementById('btnClearLog').addEventListener('click', () => { logEl.textContent = ''; });
+
+  log('Ready. Choose languages, press Start, speak, pause to trigger translation.');
+  log('Tip: For real translation, paste your OpenAI API key at the top.');
+})();
+</script>
+</body>
+</html>
